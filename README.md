@@ -1,7 +1,7 @@
 # tradeStoreApp
 
 Trade requests are coming from various sources like Kafka topics, RESTful API's, JMS Queues etc
-A TradeStore application uses CQRS pattern – Commands (writes) to MySQL; Queries (reads) from MongoDB.
+A TradeStore application uses Event Sourcing and CQRS pattern – Commands (writes) to MySQL; Queries (reads) from MongoDB.
 A CommandService handles all the concurrent requests from various sources.
 Thread Pool (ExecutorService) – For concurrent trade processing.
 Store Trade entries in Redis-cache for faster retrieval, use it to validate the TRADE.
