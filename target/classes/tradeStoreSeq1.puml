@@ -1,0 +1,38 @@
+@startuml
+
+participant "TradeStoreCommandService" as commandService
+participant "TradeExpiryService" as expiryService
+participant "TradeKafkaConsumer" as  kafkaConsumer
+participant "JmsListener" as jms
+participant "TradeQueryService" as queryService
+actor "User" as usr
+participant "Exception" as error
+
+database "trade_det" as trade
+database "trade_history" as history
+
+par TradeStore: Parallel processing
+    commandService <-- kafkaConsumer: Consumes message from Kafka consumer to process Trade.
+    commandService <-- jms: Consumes message from JMS Queue to process Trade.
+    commandService <-- usr: Handles https request to process Trade. (Using RESTful API)
+    commandService --> commandService: Validates Trade and rejects INVALID trade.
+
+    alt Trade with lower version
+        commandService -> error: Trade is rejected due to lower version.
+    else if Trade with maturity_date < current_date
+        commandService -> error: Trade is rejected due to Invalid maturity_date.
+    else if Trade with same Version
+        commandService -> trade: Updates the record with current values.
+        commandService -> history: Adds the record with current values to maintain the state/ history of a Trade
+    else if new Trade received
+        commandService -> trade: Adds a new Trade.
+        commandService -> history: Adds the record with current values to maintain the state/ history of a Trade
+    end
+end
+
+expiryService -> expiryService: Invokes Scheduled Job to marks Trade as expired.
+expiryService -> trade: Updates all trades as expired as per maturity_date.
+expiryService -> history: Updates all trades as expired as per maturity_date.
+usr -> queryService: Get Trade Data, history, aggregation, analytics etc.
+queryService <-- history: Reads data from trade_history
+@enduml

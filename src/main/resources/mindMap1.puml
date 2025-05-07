@@ -1,0 +1,29 @@
+@startuml
+|TradeStore Application|
+    start
+    :Receive Trade Requests;
+        repeat
+            :Handle Concurrent Requests;
+            if (Is Trade Valid?) then (yes)
+                if (Is Trade New?) then (yes)
+                    :Store New Trade Details;
+                    :Update Cache;
+                else (no)
+                    if (Is Same Version?) then (yes)
+                        :Update Trade Details;
+                        :Update Cache;
+                    else (no)
+                        :Reject Trade;
+                    endif
+                endif
+            else (no)
+                :Reject Trade;
+           endif
+        repeat while (More Trade Requests?)
+    :Publish Trade Updates to Kafka;
+    |Query Service|
+        :Consume Messages;
+        :Maintain Trade State in MongoDB;
+        :Use for Auditing, Aggregation, Reporting;
+stop
+@enduml
