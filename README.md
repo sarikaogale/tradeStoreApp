@@ -13,3 +13,6 @@ Event-Driven Design – Trade updates will publish events to Kafka for Query Ser
 Query Service will consume the message and
 
 Each TRADE & its state is then maintained in MongoDB and will be used by further auditing, aggregation, reporting purpose..
+Desing Links: 
+Flow Design diagram: https://github.com/sarikaogale/tradeStoreApp/blob/main/src/main/resources/TradeStoreFlowDiagram.png
+Sequence Diagram: https://github.com/sarikaogale/tradeStoreApp/blob/main/src/main/resources/tradeStoreSequenceDiagram.png
