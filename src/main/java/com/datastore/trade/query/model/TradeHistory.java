@@ -1,6 +1,7 @@
 package com.datastore.trade.query.model;
 
 
+import com.datastore.trade.command.model.Trade;
 import com.datastore.trade.query.bean.TradeDetailsBean;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -15,6 +16,5 @@ import java.util.List;
 public class TradeHistory {
     @Id
     private String id;
-    private String isExpired;
-    private List<TradeDetailsBean> tradeDetailsBeanList;
+    private Trade trade;
 }

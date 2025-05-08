@@ -39,10 +39,30 @@ public class TradeStoreCommandService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Async("tradeThreadPool")
+    @Transactional
+    public CompletableFuture<Void> processTradeAsync(Trade trade)
+    {
+
+            // maintain each trade state., can be used for auditing, reporting etc.
+            retrySaveTradeHistory(trade, 3);
+            validateTrade(trade);
+
+            retrySaveTrade(trade, 3);
+
+           // cacheTrade(trade.getTradeId(), trade); // implement Redis-cache to handle in-memory data for faster execution.
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+
+    //another way using Executor Service, for testing purpose
     @Transactional
     public void processTradeUsingExecutorService(Trade trade) {
         executor.submit(() -> {
             try {
+                // maintain each trade state., can be used for auditing, reporting etc.
+                retrySaveTradeHistory(trade, 3);
                 validateTrade(trade);
                 retrySaveTrade(trade, 3);
             } catch (Exception e) {
@@ -51,21 +71,6 @@ public class TradeStoreCommandService {
             }
         });
     }
-
-
-    @Async("tradeThreadPool")
-    @Transactional
-    public CompletableFuture<Void> processTradeAsync(Trade trade)
-    {
-            validateTrade(trade);
-
-            retrySaveTrade(trade, 3);
-            retrySaveTradeHistory(trade, 3);
-           // cacheTrade(trade.getTradeId(), trade); // implement Redis-cache to handle in-memory data for faster execution.
-
-        return CompletableFuture.completedFuture(null);
-    }
-
 
     private void validateTrade(Trade trade) {
         if (trade.getMaturityDate().isBefore(LocalDate.now())) {
@@ -97,18 +102,11 @@ public class TradeStoreCommandService {
     }
 
     private void retrySaveTradeHistory(Trade trade, int retries) {
-        TradeHistory tradeHistory;
-        TradeDetailsBean tradeDetailsBean;
-        List<TradeDetailsBean> tradeDetailsBeanList;
+
         for (int i = 0; i < retries; i++) {
             try {
-                tradeDetailsBean = new TradeDetailsBean(trade.getVersion(), trade.getCounterPartyId(), trade.getBookId(),
-                        trade.getMaturityDate(), trade.getCreatedDate());
-                tradeDetailsBeanList = new ArrayList<>();
-                tradeDetailsBeanList.add(tradeDetailsBean);
-                //enhance the code to store each state of a trade transaction... use collection.append()
-                tradeHistory = new TradeHistory(trade.getTradeId(), trade.getExpired(), tradeDetailsBeanList );
-                tradeHistoryRepository.save(tradeHistory);
+
+                tradeHistoryRepository.save(new TradeHistory(trade.getTradeId(), trade));
                 return;
             } catch (Exception e) {
                 try {
