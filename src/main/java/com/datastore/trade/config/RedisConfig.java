@@ -17,17 +17,30 @@ import java.time.Duration;
 public class RedisConfig {
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName("localhost");     // or use @Value("${spring.redis.host}")
-        config.setPort(6379);
-        // config.setPassword(RedisPassword.of("your_password")); // Uncomment if needed
+    public JedisConnectionFactory jedisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration("localhost", 6379);
         return new JedisConnectionFactory(config);
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
+    public StringRedisTemplate redisTemplate() {
+        return new StringRedisTemplate(jedisConnectionFactory());
+    }
+
+/*
+    @Bean
+    public JedisConnectionFactory redisConnectionFactory() {
+        JedisConnectionFactory factory = new JedisConnectionFactory();
+        factory.setHostName("localhost");
+        factory.setPort(6379);
+        factory.setUsePool(true);
+
+        return factory;
+    }
+
+    @Bean
+    public RedisTemplate<String, Integer> redisTemplate() {
+        RedisTemplate<String, Integer> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
         // Use String serializer for keys
@@ -35,7 +48,7 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
 
         // Use JSON serializer for values
-        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(Object.class);
+        Jackson2JsonRedisSerializer<Integer> serializer = new Jackson2JsonRedisSerializer<>(Integer.class);
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
 
@@ -55,5 +68,5 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new Jackson2JsonRedisSerializer<>(Object.class)));
-    }
+    }*/
 }

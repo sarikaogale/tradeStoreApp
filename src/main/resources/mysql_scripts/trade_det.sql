@@ -7,7 +7,7 @@ CREATE TABLE tradedb.trade_det (
      book_id varchar(50) not null,
      maturity_date date not null,
      created_date date not null,
-     is_expired varchar(1) not null default 'N',
+     is_expired char(1) not null default 'N',
        PRIMARY KEY(trade_id)
 );
 

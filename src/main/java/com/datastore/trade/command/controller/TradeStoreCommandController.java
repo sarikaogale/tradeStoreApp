@@ -4,8 +4,10 @@ import com.datastore.trade.command.dto.TradeRequestDTO;
 import com.datastore.trade.command.model.Trade;
 import com.datastore.trade.command.service.TradeStoreCommandService;
 import com.datastore.trade.exception.ValidationException;
-import com.producer.trade.service.TradeKafkaProducer;
+import com.producer.trade.service.TradeProducerService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +20,11 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class TradeStoreCommandController
 {
+    private static final Logger logger = LoggerFactory.getLogger(TradeStoreCommandController.class);
+
     @Autowired
     private final TradeStoreCommandService tradeStoreCommandService;
-    private final TradeKafkaProducer tradeKafkaProducer;
-
-
+    private final TradeProducerService tradeProducerService;
 
     @PostMapping("/trade")
     public Object addTrade(@RequestBody @Valid TradeRequestDTO dto) {
@@ -35,7 +37,6 @@ public class TradeStoreCommandController
                 dto.getCreatedDate(),
                 dto.getExpired()
         );
-        //tradeStoreCommandService.processTradeUsingExecutorService(trade);
 
         try {
             tradeStoreCommandService.processTradeAsync(trade);
@@ -58,8 +59,8 @@ public class TradeStoreCommandController
     }
 
     @PostMapping("/send")
-    public ResponseEntity<String> sendTrade(@RequestBody Trade trade) {
-        tradeKafkaProducer.sendTrade(trade);
+    public ResponseEntity<String> sendTrade(@RequestBody TradeRequestDTO trade) {
+        tradeProducerService.sendTrade(trade);
         return ResponseEntity.ok("Trade sent to Kafka topic");
     }
 }

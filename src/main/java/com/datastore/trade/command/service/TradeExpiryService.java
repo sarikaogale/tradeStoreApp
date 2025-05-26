@@ -18,7 +18,10 @@ public class TradeExpiryService {
 
 
     private final TradeRepository tradeRepository;
-    @Scheduled(cron = "0 0 0 * * *")// Runs midnight, can be marked as every minute as required
+
+    //@Scheduled(cron = "0 0 */1 * * ?")// Runs every hour, can be marked as every minute as required
+    @Scheduled(cron = "0 */1 0 * * ?")// runs every minute
+
     public void updateExpiredTrades() {
         List<Trade> expiredTrades = tradeRepository.findExpiredTrades();
         for (Trade trade : expiredTrades) {

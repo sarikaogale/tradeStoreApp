@@ -5,6 +5,13 @@ spring:
     active: local
   application:
     name: trade-store
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        compression:
+          type: snappy
+    topic: trade-topic
   datasource:
     url: jdbc:mysql://localhost:3306/tradedb
     username: root
@@ -34,3 +41,6 @@ spring:
 logging:
   level:
     org.springframework: INFO
+app:
+  kafka:
+    topic: trade-topic

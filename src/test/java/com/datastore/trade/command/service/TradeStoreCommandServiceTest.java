@@ -2,6 +2,7 @@ package com.datastore.trade.command.service;
 
 import static org.mockito.Mockito.*;
 
+import com.datastore.trade.command.dto.TradeRequestDTO;
 import com.datastore.trade.command.model.Trade;
 import com.datastore.trade.command.repository.TradeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -24,11 +27,13 @@ class TradeStoreCommandServiceTest {
     private TradeRepository tradeRepository;
 
     private TradeStoreCommandService tradeCommandService;
+    private ModelMapper modelMapper;
+    private TradeVersionCacheService tradeVersionCacheService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        tradeCommandService = new TradeStoreCommandService();
+
     }
 
     @Test
@@ -52,12 +57,14 @@ class TradeStoreCommandServiceTest {
         Trade existing = new Trade("T1", 2, "CP-1", "B1",
                 LocalDate.now().plusDays(1), LocalDate.now(), "N");
 
+        TradeRequestDTO tradeRequestDTO = new TradeRequestDTO("T1", 1, "CP-1", "B1",
+                LocalDate.now().plusDays(1), LocalDate.now(), "N");
         Trade incoming = new Trade("T1", 1, "CP-1", "B1",
                 LocalDate.now().plusDays(1), LocalDate.now(), "N");
 
         when(tradeRepository.findById("T1")).thenReturn(Optional.of(existing));
 
-        tradeCommandService.processTradeUsingExecutorService(incoming);
+        tradeCommandService.processTradeUsingExecutorService(tradeRequestDTO);
 
         verify(tradeRepository, never()).save(incoming);
     }

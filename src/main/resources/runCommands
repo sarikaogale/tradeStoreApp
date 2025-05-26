@@ -1,0 +1,4 @@
+ #for Redis
+ docker run -d -p 6379:6379 --name redis redis:latest
+#for Kafka
+ docker-compose -f kafka-single-node.yml up -d

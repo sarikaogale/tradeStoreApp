@@ -1,5 +1,6 @@
 package com.datastore.trade.query.controller;
 
+import com.datastore.trade.command.model.Trade;
 import com.datastore.trade.query.model.TradeHistory;
 import com.datastore.trade.query.service.TradeQueryService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class TradeQueryController {
     }
 
     @GetMapping("/{id}")
-    public TradeHistory getTrade(@PathVariable String id) {
-        return tradeQueryService.getTrade(id);
+    public List<Trade> getTradeHistory(@PathVariable String id) {
+        return tradeQueryService.getTradeHistory(id);
     }
 }

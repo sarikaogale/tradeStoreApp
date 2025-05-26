@@ -1,5 +1,6 @@
 package com.datastore.trade.query.service;
 
+import com.datastore.trade.command.model.Trade;
 import com.datastore.trade.query.model.TradeHistory;
 import com.datastore.trade.query.repository.TradeHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,11 +13,15 @@ import java.util.List;
 public class TradeQueryService {
     private final TradeHistoryRepository repository;
 
-    public List<TradeHistory> getAllTrades() {
-        return repository.findAll();
+    public List<Trade> getTradeHistory(String tradeId) {
+        return repository.findById(tradeId)
+                .map(TradeHistory::getHistory)
+                .orElse(List.of());
     }
 
-    public TradeHistory getTrade(String tradeId) {
-        return repository.findById(tradeId).orElse(null);
+    public List<TradeHistory> getAllTrades()
+    {
+        return  repository.findAll();
     }
+
 }
