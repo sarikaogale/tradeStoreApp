@@ -1,4 +1,4 @@
-package com.datastore.trade.config;
+package com.producer.trade.config;
 
 import com.datastore.trade.command.dto.TradeRequestDTO;
 import org.apache.kafka.clients.producer.ProducerConfig;

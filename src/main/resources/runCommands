@@ -2,3 +2,9 @@
  docker run -d -p 6379:6379 --name redis redis:latest
 #for Kafka
  docker-compose -f kafka-single-node.yml up -d
+
+# to create a docker image
+docker build -t trade-store-app .
+
+# Command to run a app using docker image
+docker run -p 8085:8085 trade-store-app

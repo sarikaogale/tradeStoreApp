@@ -4,7 +4,7 @@ spring:
   profiles:
     active: local
   application:
-    name: trade-store
+    name: trade-store-app
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -13,7 +13,7 @@ spring:
           type: snappy
     topic: trade-topic
   datasource:
-    url: jdbc:mysql://localhost:3306/tradedb
+    url: jdbc:mysql://localhost:3306/tradedb?useSSL=false&serverTimezone=UTC
     username: root
     password: root
     driverClassName: com.mysql.jdbc.Driver
