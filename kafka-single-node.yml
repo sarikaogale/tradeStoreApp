@@ -5,12 +5,13 @@ services:
 #Kafka Service
   kafka:
     image: 'bitnami/kafka:3.4'
-    container_name: tradeStore-kafka-broker
+    container_name: kafka-broker
 
     environment:
       - KAFKA_ENABLE_KRAFT=yes
       - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_NODE_ID=1
+
+      - KAFKA_CFG_NODE_ID=1      
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT

@@ -25,7 +25,7 @@ import java.util.Map;
         entityManagerFactoryRef = "entityManagerFactory",
         transactionManagerRef = "transactionManager"
 )
-public class MySqlDbConfig {
+public class SqlDbConfig {
 
     @Autowired
     private Environment env;
@@ -51,7 +51,7 @@ public class MySqlDbConfig {
     private Map<String, Object> hibernateProperties() {
         Map<String, Object> props = new HashMap<>();
         props.put("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto", "update"));
-        props.put("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect"));
+        props.put("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"));
         props.put("hibernate.show_sql", env.getProperty("spring.jpa.show-sql", "true"));
         return props;
     }

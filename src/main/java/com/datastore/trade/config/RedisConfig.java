@@ -1,5 +1,6 @@
 package com.datastore.trade.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.*;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -16,57 +17,34 @@ import java.time.Duration;
 @EnableCaching
 public class RedisConfig {
 
-    @Bean
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
+   /* @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration("localhost", 6379);
         return new JedisConnectionFactory(config);
-    }
+    }*/
 
+    @Bean
+    public JedisConnectionFactory jedisConnectionFactory() {
+        // --- FIX IS HERE: Use the Docker service name 'redis_db' ---
+      //  RedisStandaloneConfiguration config = new RedisStandaloneConfiguration("redis_db", 6379);
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
+
+
+        // If your Redis instance requires a password (as configured in docker-compose.yml),
+        // you MUST set it here as well:
+        // config.setPassword("your_redis_password"); // Replace with your actual Redis password
+
+        return new JedisConnectionFactory(config);
+    }
     @Bean
     public StringRedisTemplate redisTemplate() {
         return new StringRedisTemplate(jedisConnectionFactory());
     }
 
-/*
-    @Bean
-    public JedisConnectionFactory redisConnectionFactory() {
-        JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName("localhost");
-        factory.setPort(6379);
-        factory.setUsePool(true);
 
-        return factory;
-    }
-
-    @Bean
-    public RedisTemplate<String, Integer> redisTemplate() {
-        RedisTemplate<String, Integer> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory());
-
-        // Use String serializer for keys
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-
-        // Use JSON serializer for values
-        Jackson2JsonRedisSerializer<Integer> serializer = new Jackson2JsonRedisSerializer<>(Integer.class);
-        template.setValueSerializer(serializer);
-        template.setHashValueSerializer(serializer);
-
-        template.setEnableTransactionSupport(true);
-        template.afterPropertiesSet();
-        return template;
-    }
-
-    @Bean
-    public RedisCacheConfiguration cacheConfiguration() {
-        return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(30))  // default TTL
-                .disableCachingNullValues()
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new Jackson2JsonRedisSerializer<>(Object.class)));
-    }*/
 }

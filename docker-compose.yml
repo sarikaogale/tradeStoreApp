@@ -1,0 +1,127 @@
+#version: '3.8'
+
+services:
+  # Spring Boot Application Service
+  trade-store-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      # Pass environment variables for Spring Boot if needed (overrides application.properties)
+      # Example: Use for secrets or different profiles
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_APPLICATION_JSON: '{"logging.level.org.springframework.boot.env": "DEBUG"}'
+      # You can also pass database credentials here, e.g.:
+      # SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+    depends_on:
+     redis_db:
+       condition: service_started
+     kafka_broker:
+       condition: service_healthy
+     postgres_db:
+       condition: service_started
+     mongodb_db:
+      condition: service_started
+    networks:
+      - app_network
+    restart: on-failure
+
+  # Redis Service
+  redis_db:
+    image: redis:7-alpine # Use a lightweight Redis image
+    ports:
+      - "6379:6379" # Expose Redis to host (optional, for local redis-cli access)
+    volumes:
+      - redis_data:/data # Persist Redis data
+    networks:
+      - app_network
+    restart: always
+    healthcheck: # <--- ADDED HEALTHCHECK FOR REDIS
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # 5. Kafka Broker Service
+  # This service runs a Kafka broker.
+  kafka_broker:
+    image: 'bitnami/kafka:3.4'
+    ports:
+      - "9092:9092" # Expose EXTERNAL listener for host access
+      - "29092:29092" # Expose CLIENT listener for potential host access (optional)
+    environment:
+      # --- KRAFT MODE CONFIGURATION ---
+      KAFKA_ENABLE_KRAFT: "yes" # <--- Enable KRaft mode
+      ALLOW_PLAINTEXT_LISTENER: "yes" # <--- Allow plaintext connections
+      KAFKA_CFG_NODE_ID: 1 # Unique ID for this broker/controller
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller" # This instance acts as both broker and controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "CLIENT" # Inter-broker communication uses CLIENT listener
+      KAFKA_CFG_LISTENERS: "CLIENT://:29092,EXTERNAL://:9092,CONTROLLER://:9093" # Internal listeners
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "CLIENT://kafka_broker:29092,EXTERNAL://localhost:9092" # <--- How clients connect
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@127.0.0.1:9093" # For single-node KRaft, point to itself
+      # --- Other standard Kafka configs for KRaft (if needed, Bitnami handles many defaults) ---
+      # KAFKA_CFG_LOG_DIRS: /opt/bitnami/kafka/data/logs # Default log directory
+      # KAFKA_CFG_NUM_PARTITIONS: 1 # Default number of partitions for new topics
+      # KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 1 # Default replication factor for new topics
+      # --- Message size configs (ensure these are still needed and correct for Bitnami) ---
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 2147483647 # ~2 GB
+      KAFKA_CFG_REPLICA_FETCH_MAX_BYTES: 2147483647 # ~2 GB
+      KAFKA_CFG_MAX_REQUEST_SIZE: 2147483647 # ~2 GB
+    networks:
+      - app_network
+    restart: always
+    healthcheck: # <--- Healthcheck for Bitnami Kafka in KRaft mode
+      test: [ "CMD", "/opt/bitnami/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:29092", "--version" ] # Use CLIENT listener
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s # Give Kafka more time to start up
+
+
+  postgres_db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432" # Host:Container
+    environment:
+      POSTGRES_DB: tradedb    # Matches DB_URL in Java code
+      POSTGRES_USER: postgres      # Matches DB_USER in Java code
+      POSTGRES_PASSWORD: root # Matches DB_PASSWORD in Java code
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    restart: always
+
+
+  # MongoDB Database Service
+  mongodb_db:
+    image: mongo:latest # Use the latest MongoDB image
+    ports:
+      - "27017:27017" # Expose MongoDB to host (optional, for local Mongo clients)
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:  # IMPORTANT: Change this
+      MONGO_INITDB_ROOT_PASSWORD:  # IMPORTANT: Change this
+      MONGO_INITDB_DATABASE: trade_history # Create an initial database
+    volumes:
+      - mongodb_data:/data/db # Persist MongoDB data
+    networks:
+      - app_network
+    restart: always
+
+# Define named volumes for data persistence
+volumes:
+  redis_data:
+  postgres_test_data:
+  mongodb_data:
+  kafka_data: # Optional: for Kafka log data persistence if needed for advanced scenarios
+    driver: local
+
+# Define a custom bridge network for all services
+networks:
+  app_network:
+    driver: bridge
